@@ -22,7 +22,6 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         {"entity": {"domain": "remote"}}
                     ),
                     vol.Optional(CONF_NAME): str,
-                    vol.Optional("area"): selector({"area": {}}),
                 }
             )
             return self.async_show_form(step_id="user", data_schema=schema)
@@ -40,8 +39,6 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "handset_id": handset_id,
             CONF_NAME: user_input.get(CONF_NAME) or f"TR198A Fan {handset_id:04X}",
         }
-        if "area" in user_input:
-            data["area"] = user_input["area"]
 
         title = data[CONF_NAME]
         return self.async_create_entry(title=title, data=data)

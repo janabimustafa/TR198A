@@ -62,15 +62,7 @@ async def _execute(fan: "Tr198aFan", svc: str):
         cmd = build_operational_command(fan._handset_id, dim="up")
     else:  # DIM_DOWN
         cmd = build_operational_command(fan._handset_id, dim="down")
-    await fan.hass.services.async_call(
-        "remote",
-        "send_command",
-        {
-            "target": {"entity_id": [fan._remote_entity_id]},
-            "command": [cmd],
-        },
-        blocking=True,
-    )
+    await fan.async_send_base64(cmd)
     fan.async_write_ha_state()
 
 class _Tr198aButton(ButtonEntity):
@@ -91,13 +83,8 @@ class _Tr198aButton(ButtonEntity):
         )
 
     async def async_press(self):
-        fan = self.hass.data[DOMAIN][self._entry_id].get("fan_entity")
-        if fan is None:
-            # look it up via entity_id registry the first time
-            fan = self.hass.states.get(self._fan_uid)
-            fan = self.hass.data[DOMAIN][self._entry_id].get("fan_entity")
-        if fan:
-            await _execute(fan, self._svc)
+        fan = self.hass.data[DOMAIN][self._entry_id]["fan_entity"]
+        await _execute(fan, self._svc)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Platform-loader

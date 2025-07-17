@@ -31,21 +31,25 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._handset_id         = handset_id
         self._state: dict[str, Any] = DEF_STATE.copy()
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
+        
 
     # ─────── internal helpers ───────
-    async def _tx(self, **kwargs):
-        cmd = build_operational_command(self._handset_id, **kwargs)
-
+    async def async_send_base64(self, cmd: str):
+        """Low-level helper used by both fan actions & buttons."""
         await self.hass.services.async_call(
             "remote",
             "send_command",
             {
-                # ←––––  new style –––––→
-                "target": {"entity_id": [self._remote_entity_id]},
+                "entity_id": self._remote_entity_id,   # ← back to schema-approved key
                 "command": [cmd],
             },
             blocking=True,
         )
+
+    async def _tx(self, **kwargs):
+        """Build packet, transmit, but don’t touch state."""
+        cmd = build_operational_command(self._handset_id, **kwargs)
+        await self.async_send_base64(cmd)
 
     # ─────── FanEntity API ───────
     @property
@@ -112,3 +116,4 @@ async def async_setup_entry(
     fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"])
     async_add_entities([fan])
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
+    hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access
