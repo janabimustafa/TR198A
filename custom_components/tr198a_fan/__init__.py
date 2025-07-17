@@ -1,25 +1,25 @@
+from __future__ import annotations
+import logging
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_NAME
+from homeassistant.core import HomeAssistant
+
 from .const import DOMAIN
-from .fan import Tr198aFan
-from .button import register_buttons
 
-async def async_setup(hass, config):
-    return True   # YAML is now discouraged – UI flow does it all
+_LOGGER = logging.getLogger(__name__)
 
-async def async_setup_entry(hass, entry: ConfigEntry):
-    data = entry.data
-    remote_id   = data["remote_entity_id"]
-    handset_id  = data["handset_id"]
-    name        = data.get(CONF_NAME, f"TR198A Fan {handset_id:04X}")
-
-    fan = Tr198aFan(hass, name, remote_id, handset_id)
-    # store for service-dispatch
-    hass.data.setdefault(DOMAIN, {})[fan.unique_id] = fan
-
-    # add the entities
-    platform = hass.helpers.entity_platform.async_get_current_platform()
-    platform.async_add_entities([fan])
-    await register_buttons(hass, fan)
-
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """No YAML support; everything goes through UI config-flow."""
     return True
+
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Forward the entry to the fan & button platforms."""
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {}
+    await hass.config_entries.async_forward_entry_setups(entry, {"fan", "button"})
+    return True
+
+async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Remove the platforms when the entry is deleted."""
+    unloaded = await hass.config_entries.async_unload_platforms(entry, {"fan", "button"})
+    if unloaded:
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+    return unloaded

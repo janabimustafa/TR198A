@@ -80,3 +80,44 @@ class _Tr198aButton(ButtonEntity):
 
     async def async_press(self) -> None:
         await _execute(self._fan, self._svc)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Platform-loader
+# ─────────────────────────────────────────────────────────────────────────────
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from .const import DOMAIN
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Create the four Button entities & register services once."""
+    fan = hass.data[DOMAIN][entry.entry_id]["fan"]
+
+    entities = [_Tr198aButton(fan, svc, label) for svc, label in BUTTONS.items()]
+    async_add_entities(entities)
+
+    # Register our four helper-services only the first time
+    if hass.data[DOMAIN].get("services_registered"):
+        return
+    from homeassistant.core import callback
+
+    @callback
+    async def _service_handler(call):
+        svc = call.service
+        targets = call.data.get("entity_id")
+        if not targets:
+            return
+        for eid in hass.helpers.entity_component.async_extract_entity_ids(call):
+            # search across ALL entries because service may mix fans
+            for entry_id in hass.data[DOMAIN]:
+                fan_ = hass.data[DOMAIN][entry_id].get("fan")
+                if fan_ and fan_.entity_id == eid:
+                    await _execute(fan_, svc)
+
+    for svc in BUTTONS:
+        hass.services.async_register(DOMAIN, svc, _service_handler)
+
+    hass.data[DOMAIN]["services_registered"] = True

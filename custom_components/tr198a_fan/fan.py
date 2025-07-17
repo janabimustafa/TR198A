@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import Any
 import logging, asyncio
-from homeassistant.components.fan import FanEntity, RestoreEntity, FanEntityFeature
 from homeassistant.core import HomeAssistant
+from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.const import STATE_OFF
 
@@ -91,3 +91,25 @@ class Tr198aFan(FanEntity, RestoreEntity):
             ATTR_LIGHT: self._state[ATTR_LIGHT],
             ATTR_HANDSET_ID: hex(self._handset_id),
         }
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.const import CONF_NAME
+from .const import DOMAIN
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Create the fan entity for this Config Entry."""
+    data = entry.data
+    name        = data.get(CONF_NAME) or f"TR198A Fan {data['handset_id']:04X}"
+    remote_id   = data["remote_entity_id"]
+    handset_id  = data["handset_id"]
+
+    fan = Tr198aFan(hass, name, remote_id, handset_id)
+    async_add_entities([fan])
+
+    # Stash reference so button platform can look it up quickly
+    hass.data[DOMAIN][entry.entry_id]["fan"] = fan
