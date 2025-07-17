@@ -32,6 +32,11 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._state: dict[str, Any] = DEF_STATE.copy()
         self._prev_speed: int = 5      # default «remembered» speed
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
+        self._attr_device_info = DeviceInfo(
+            identifiers={self._dev_id},
+            manufacturer="TR-198A",
+            model="Ceiling-Fan Remote",
+        )
         
 
     # ─────── internal helpers ───────
@@ -111,15 +116,6 @@ class Tr198aFan(FanEntity, RestoreEntity):
             ATTR_LIGHT: self._state[ATTR_LIGHT],
             ATTR_HANDSET_ID: hex(self._handset_id),
         }
-    @property
-    def device_info(self) -> DeviceInfo:
-        return DeviceInfo(
-            identifiers={self._dev_id},
-            name=self._attr_name,
-            manufacturer="TR-198A",
-            model="Ceiling-Fan Remote",
-            via_device=None,   # or point to your RM4’s device if you like
-        )
 
 async def async_setup_entry(
     hass, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
