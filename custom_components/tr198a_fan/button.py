@@ -60,7 +60,7 @@ async def _execute(fan: "Tr198aFan", svc: str):
         fan._state[ATTR_LIGHT] = not fan._state[ATTR_LIGHT]
     elif svc == SERVICE_DIM_UP:
         # 3-step dim up
-        steps = 3
+        steps = 2
         radio_repeats = 0xC9 + (steps - 1) * 4
         cmd = build_operational_command(
             fan._handset_id,
@@ -70,7 +70,7 @@ async def _execute(fan: "Tr198aFan", svc: str):
         )
     else:  # DIM_DOWN
         # 3-step dim down
-        steps = 3
+        steps = 2
         radio_repeats = 0xC9 + (steps - 1) * 4
         cmd = build_operational_command(
             fan._handset_id,
