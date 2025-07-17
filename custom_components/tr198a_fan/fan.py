@@ -95,7 +95,10 @@ class Tr198aFan(FanEntity, RestoreEntity):
         return self._state[ATTR_DIRECTION]
 
     async def async_set_direction(self, direction: str):
-        await self._tx(direction=direction)
+        if direction not in ("forward", "reverse"):
+            raise ValueError(f"Invalid direction: {direction}")
+        
+        await self._tx(direction='down' if direction == 'forward' else 'up')
         self._state[ATTR_DIRECTION] = direction
         self.async_write_ha_state()
 
