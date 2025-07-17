@@ -23,7 +23,7 @@ FIRST_PREAMBLE_US   = (MARK1_US, SPACE1_US, MARK1_US)
 PREAMBLE_US         = (MARK1_US, SPACE1_US, MARK0_US, SPACE0_US,
                        MARK0_US, SPACE0_US)
 INTER_GAP_US        = (11_822, SPACE1_US)
-TRAILER_US          = 49_260
+TRAILER_US          = 397
 REPEATS             = 5
 RADIO_REPEATS       = 0xC0
 
@@ -112,10 +112,33 @@ def build_rf_packet(bits: str, *,
 def build_base64_command(packet: bytes) -> str:
     return 'b64:' + base64.b64encode(packet).decode()
 
-def build_operational_command(handset_id: int, **kwargs) -> str:
-    bits = build_payload(handset_id, **kwargs)
-    pkt  = build_rf_packet(bits, radio_repeats=kwargs.get("radio_repeats",RADIO_REPEATS),
-                           trailer_us=kwargs.get("trailer_us", TRAILER_US))
+def build_operational_command(
+    handset_id: int,
+    *,
+    speed: int | None = None,
+    direction: Dir = "reverse",
+    light_toggle: bool = False,
+    dim: DimDir = None,
+    timer: Timer = None,
+    breeze: Breeze = None,
+    radio_repeats: int = RADIO_REPEATS,
+    trailer_us: int = TRAILER_US,
+) -> str:
+    """Build a base64-encoded RF packet for an operational command."""
+    bits = build_payload(
+        handset_id,
+        speed=speed,
+        direction=direction,
+        light_toggle=light_toggle,
+        dim=dim,
+        timer=timer,
+        breeze=breeze,
+    )
+    pkt = build_rf_packet(
+        bits,
+        radio_repeats=radio_repeats,
+        trailer_us=trailer_us,
+    )
     return build_base64_command(pkt)
 
 def build_pair_command(handset_id: int) -> str:

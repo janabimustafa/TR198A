@@ -59,9 +59,25 @@ async def _execute(fan: "Tr198aFan", svc: str):
         cmd = build_operational_command(fan._handset_id, light_toggle=True)
         fan._state[ATTR_LIGHT] = not fan._state[ATTR_LIGHT]
     elif svc == SERVICE_DIM_UP:
-        cmd = build_operational_command(fan._handset_id, dim="up")
+        # 3-step dim up
+        steps = 3
+        radio_repeats = 0xC9 + (steps - 1) * 4
+        cmd = build_operational_command(
+            fan._handset_id,
+            dim="up",
+            radio_repeats=radio_repeats,
+            trailer_us=394,
+        )
     else:  # DIM_DOWN
-        cmd = build_operational_command(fan._handset_id, dim="down")
+        # 3-step dim down
+        steps = 3
+        radio_repeats = 0xC9 + (steps - 1) * 4
+        cmd = build_operational_command(
+            fan._handset_id,
+            dim="down",
+            radio_repeats=radio_repeats,
+            trailer_us=394,
+        )
     await fan.async_send_base64(cmd)
     fan.async_write_ha_state()
 
