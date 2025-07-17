@@ -1,0 +1,9 @@
+{
+  "domain": "tr198a_fan",
+  "name": "TR198A Ceiling-Fan",
+  "version": "1.0.0",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@your-github"],
+  "iot_class": "local_polling"
+}

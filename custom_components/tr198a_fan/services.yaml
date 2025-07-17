@@ -1,0 +1,20 @@
+pair:
+  description: Send the 10× pairing packet so the fan learns this handset ID.
+  fields:
+    entity_id:
+      description: Fan entity to pair
+      example: fan.living_room_fan
+
+light_toggle:
+  description: Toggle light on/off (stateless on the fan itself).
+  fields:
+    entity_id:
+      description: Fan entity
+dim_up:
+  description: One dim-up step (0-10 repeat automatically handled).
+  fields:
+    entity_id:
+dim_down:
+  description: One dim-down step.
+  fields:
+    entity_id:
