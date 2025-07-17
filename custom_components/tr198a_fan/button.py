@@ -55,30 +55,18 @@ async def _dispatch(hass: HomeAssistant, call, svc: str):
 async def _execute(fan: "Tr198aFan", svc: str):
     if svc == SERVICE_PAIR:
         cmd = build_pair_command(fan._handset_id)
-    elif svc == SERVICE_LIGHT_TOGGLE:
-        cmd = build_operational_command(fan._handset_id, light_toggle=True)
+        await fan._send_base64(cmd)          # pairing packet is special
+        return
+    if svc == SERVICE_LIGHT_TOGGLE:
+        await fan._send_state(light_toggle=True)
         fan._state[ATTR_LIGHT] = not fan._state[ATTR_LIGHT]
-    elif svc == SERVICE_DIM_UP:
-        # 3-step dim up
+
+    else:  # DIM UP / DOWN  — send 2 steps
         steps = 2
-        radio_repeats = 0xC9 + (steps - 1) * 4
-        cmd = build_operational_command(
-            fan._handset_id,
-            dim="up",
-            radio_repeats=radio_repeats,
-            trailer_us=394,
-        )
-    else:  # DIM_DOWN
-        # 3-step dim down
-        steps = 2
-        radio_repeats = 0xC9 + (steps - 1) * 4
-        cmd = build_operational_command(
-            fan._handset_id,
-            dim="down",
-            radio_repeats=radio_repeats,
-            trailer_us=394,
-        )
-    await fan.async_send_base64(cmd)
+        radio = 0xC9 + (steps - 1) * 4
+        trailer = 394
+        dir_ = "up" if svc == SERVICE_DIM_UP else "down"
+        await fan._send_state(dim=dir_, radio_repeats=radio, trailer_us=trailer)
     fan.async_write_ha_state()
 
 class _Tr198aButton(ButtonEntity):

@@ -40,7 +40,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         
 
     # ─────── internal helpers ───────
-    async def async_send_base64(self, cmd: str):
+    async def _send_base64(self, cmd: str):
         """Low-level helper used by both fan actions & buttons."""
         await self.hass.services.async_call(
             "remote",
@@ -52,10 +52,31 @@ class Tr198aFan(FanEntity, RestoreEntity):
             blocking=True,
         )
 
-    async def _tx(self, **kwargs):
-        """Build packet, transmit, but don’t touch state."""
-        cmd = build_operational_command(self._handset_id, **kwargs)
-        await self.async_send_base64(cmd)
+    # ───────────────── FULL‑STATE SENDER ─────────────────
+    async def _send_state(self, *,
+                          radio_repeats=None,
+                          trailer_us=None,
+                          **overrides):
+        """
+        Build & transmit a command that contains the **entire** current
+        state, plus any *overrides* (speed change, light toggle …).
+        """
+        # Base = current remembered state
+        base = dict(
+            speed=self._state[ATTR_SPEED],
+            direction= 'down' if self._state[ATTR_DIRECTION] == "forward" else 'up',
+            timer=self._state[ATTR_TIMER],
+            breeze=self._state[ATTR_BREEZE],
+            light_toggle=False,
+        )
+        base.update(overrides)                   # apply caller’s changes
+        if radio_repeats is not None:
+            base["radio_repeats"] = radio_repeats
+        if trailer_us is not None:
+            base["trailer_us"] = trailer_us
+
+        cmd = build_operational_command(self._handset_id, **base)
+        await self._send_base64(cmd)
 
     # ─────── FanEntity API ───────
     @property
@@ -66,7 +87,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         speed = round(percentage/10)
         if speed > 0:
            self._prev_speed = speed   # remember last running speed
-        await self._tx(speed=speed)
+        await self._send_state(speed=speed)
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
@@ -86,7 +107,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         await self.async_set_percentage(int(percentage))
 
     async def async_turn_off(self, **kwargs):
-        await self._tx(speed=0)
+        await self._send_state(speed=0)
         self._state[ATTR_SPEED] = 0
         self.async_write_ha_state()
 
@@ -98,7 +119,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         if direction not in ("forward", "reverse"):
             raise ValueError(f"Invalid direction: {direction}")
         
-        await self._tx(direction='down' if direction == 'forward' else 'up')
+        await self._send_state(direction='down' if direction == 'forward' else 'up')
         self._state[ATTR_DIRECTION] = direction
         self.async_write_ha_state()
 
