@@ -4,8 +4,10 @@ import logging, asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.components.fan import FanEntity, FanEntityFeature
 from homeassistant.helpers.restore_state import RestoreEntity
-from homeassistant.const import STATE_OFF
-
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.const import CONF_NAME
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import *
 from .codec import build_operational_command
 
@@ -28,6 +30,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._remote_entity_id   = remote_entity
         self._handset_id         = handset_id
         self._state: dict[str, Any] = DEF_STATE.copy()
+        self._dev_id = (DOMAIN, f"{handset_id:04x}")
 
     # ─────── internal helpers ───────
     async def _tx(self, **kwargs):
@@ -91,25 +94,21 @@ class Tr198aFan(FanEntity, RestoreEntity):
             ATTR_LIGHT: self._state[ATTR_LIGHT],
             ATTR_HANDSET_ID: hex(self._handset_id),
         }
-
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.const import CONF_NAME
-from .const import DOMAIN
+    @property
+    def device_info(self) -> DeviceInfo:
+        return DeviceInfo(
+            identifiers={self._dev_id},
+            name=self._attr_name,
+            manufacturer="TR-198A",
+            model="Ceiling-Fan Remote",
+            via_device=None,   # or point to your RM4’s device if you like
+        )
 
 async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    hass, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """Create the fan entity for this Config Entry."""
     data = entry.data
     name        = data.get(CONF_NAME) or f"TR198A Fan {data['handset_id']:04X}"
-    remote_id   = data["remote_entity_id"]
-    handset_id  = data["handset_id"]
-
-    fan = Tr198aFan(hass, name, remote_id, handset_id)
+    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"])
     async_add_entities([fan])
-
-    # Stash reference so button platform can look it up quickly
-    hass.data[DOMAIN][entry.entry_id]["fan"] = fan
+    hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
