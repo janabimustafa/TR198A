@@ -64,7 +64,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         # Base = current remembered state
         base = dict(
             speed=self._state[ATTR_SPEED],
-            direction= 'down' if self._state[ATTR_DIRECTION] == "forward" else 'up',
+            direction=self._state[ATTR_DIRECTION],
             timer=self._state[ATTR_TIMER],
             breeze=self._state[ATTR_BREEZE],
             light_toggle=False,
@@ -119,7 +119,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         if direction not in ("forward", "reverse"):
             raise ValueError(f"Invalid direction: {direction}")
         
-        await self._send_state(direction='down' if direction == 'forward' else 'up')
+        await self._send_state(direction=direction)
         self._state[ATTR_DIRECTION] = direction
         self.async_write_ha_state()
 
