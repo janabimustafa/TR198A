@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class Tr198aFan(FanEntity, RestoreEntity):
     _attr_supported_features = (
-        FanEntityFeature.SET_SPEED | FanEntityFeature.DIRECTION
+        FanEntityFeature.SET_SPEED | FanEntityFeature.DIRECTION | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF 
     )
     _speed_range = (1, 10)
 
@@ -30,6 +30,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._remote_entity_id   = remote_entity
         self._handset_id         = handset_id
         self._state: dict[str, Any] = DEF_STATE.copy()
+        self._prev_speed: int = 5      # default «remembered» speed
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
         
 
@@ -58,14 +59,16 @@ class Tr198aFan(FanEntity, RestoreEntity):
 
     async def async_set_percentage(self, percentage: int):
         speed = round(percentage/10)
+        if speed > 0:
+           self._prev_speed = speed   # remember last running speed
         await self._tx(speed=speed)
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
     async def async_turn_on(self, percentage: int | None = None, **kwargs):
-        if percentage is None:
-            percentage = 50
-        await self.async_set_percentage(percentage)
+        # Use remembered speed if caller didn’t supply one
+        speed_pct = percentage if percentage is not None else self._prev_speed * 10
+        await self.async_set_percentage(speed_pct)
 
     async def async_turn_off(self, **kwargs):
         await self._tx(speed=0)
