@@ -65,10 +65,20 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
-    async def async_turn_on(self, percentage: int | None = None, **kwargs):
-        # Use remembered speed if caller didn’t supply one
-        speed_pct = percentage if percentage is not None else self._prev_speed * 10
-        await self.async_set_percentage(speed_pct)
+    async def async_turn_on(self, *positional, **kwargs):
+        """Turn on to either:
+           • percentage passed by HA (new API), or
+           • remembered speed (fallback)."""
+        # HA still sometimes calls (speed, percentage, preset_mode, ...)
+        percentage = (
+            kwargs.get("percentage")                 # new API
+            or (positional[1] if len(positional) > 1 else None)  # old style
+        )
+
+        if percentage is None:           # no value given → use remembered speed
+            percentage = self._prev_speed * 10
+
+        await self.async_set_percentage(int(percentage))
 
     async def async_turn_off(self, **kwargs):
         await self._tx(speed=0)
