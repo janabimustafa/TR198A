@@ -33,9 +33,9 @@
           "preset_mode": {
             "name": "Preset mode",
             "state": {
-              "breeze_1": "Breeze - Gentle",
-              "breeze_2": "Breeze - Medium",
-              "breeze_3": "Breeze - Strong"
+              "breeze_1": "Breeze - 1",
+              "breeze_2": "Breeze - 2",
+              "breeze_3": "Breeze - 3"
             }
           }
         }
