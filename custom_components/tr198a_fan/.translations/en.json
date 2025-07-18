@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add TR198A Ceiling-Fan",
+        "description": "Create a virtual remote for your TR198A ceiling-fan.\n\n• **Broadlink remote** – the RM4-Pro (or similar) that will transmit the RF packets.\n• **Dependent power switch** – optional. If the fan is powered through a smart wall switch, pick it here so the integration will automatically turn the switch **on** before every command.\n• **Fan name** – friendly name you’ll see in the UI.",
+        "data": {
+          "remote_entity_id": "Broadlink remote",
+          "power_switch_entity_id": "Dependent power switch",
+          "name": "Fan name"
+        }
+      }
+    }
+  },
+
+  "options": {
+    "step": {
+      "init": {
+        "title": "TR198A options",
+        "description": "Update the Broadlink remote, dependent power-switch or friendly name.",
+        "data": {
+          "remote_entity_id": "Broadlink remote",
+          "power_switch_entity_id": "Dependent power switch",
+          "name": "Fan name"
+        }
+      }
+    }
+  },
+
+  "flow_title": "TR198A: {name}"
+}
