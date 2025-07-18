@@ -107,6 +107,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
             self._prev_speed = speed # remember last running speed
         await self._send_state(speed=speed, breeze=None)
         self._state[ATTR_SPEED] = speed
+        self._state[ATTR_BREEZE] = None  # reset breeze mode
         self.async_write_ha_state()
 
     async def async_turn_on(self, *positional, **kwargs):
@@ -131,8 +132,9 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
-        await self._send_state(speed=0)
+        await self._send_state(speed=0, breeze=None)
         self._state[ATTR_SPEED] = 0
+        self._state[ATTR_BREEZE] = None  # reset breeze mode
         self.async_write_ha_state()
 
     @property
