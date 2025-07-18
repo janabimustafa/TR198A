@@ -15,50 +15,52 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     # ───────────────── STEP: USER ─────────────────
     async def async_step_user(self, user_input=None):
-        # Determine if power switch is selected (for disabling auto_pair)
-        power_switch_selected = False
-        if user_input is not None:
-            power_switch_selected = bool(user_input.get("power_switch_entity_id"))
-
-        if user_input is None or not power_switch_selected:
-            # Use data_schema as dict to control disabled state
-            data_schema = {
-                "remote_entity_id": selector({"entity": {"domain": "remote"}}),
-                "power_switch_entity_id": selector({"entity": {"domain": "switch"}}),
-                CONF_NAME: str,
-                "auto_pair": {
-                    "type": "boolean",
-                    "default": True,
-                    "disabled": not power_switch_selected,
-                },
+        errors = {}
+        # Build schema with auto_pair option
+        schema = vol.Schema(
+            {
+                vol.Required("remote_entity_id"): selector({"entity": {"domain": "remote"}}),
+                vol.Optional("power_switch_entity_id"): selector({"entity": {"domain": "switch"}}),
+                vol.Optional(CONF_NAME): str,
+                vol.Optional("auto_pair", default=True): bool,
             }
+        )
+
+        if user_input is not None:
+            auto_pair = user_input.get("auto_pair", True)
+            power_switch = user_input.get("power_switch_entity_id")
+            if auto_pair and not power_switch:
+                errors["auto_pair"] = "auto_pair_requires_power_switch"
+                return self.async_show_form(
+                    step_id="user",
+                    data_schema=schema,
+                    errors=errors,
+                    description_placeholders={
+                        "auto_pair_disabled": True
+                    },
+                )
+            # 1. generate a unique handset-id
+            handset_id = random.randint(0, HANDSET_ID_BITS)
+
+            # 2. ensure *ConfigEntry* unique-id uniqueness
+            unique_id = f"tr198a_{handset_id:04x}"
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+            data = {
+                "remote_entity_id": user_input["remote_entity_id"],
+                "handset_id": handset_id,
+                CONF_NAME: user_input.get(CONF_NAME) or f"TR198A Fan {handset_id:04X}",
+                "auto_pair": auto_pair,
+            }
+            if power_switch:
+                data["power_switch_entity_id"] = power_switch
+            title = data[CONF_NAME]
+            return self.async_create_entry(title=title, data=data)
+        else:
             return self.async_show_form(
                 step_id="user",
-                data_schema=data_schema,
-                description_placeholders={
-                    "auto_pair_disabled": not power_switch_selected
-                },
+                data_schema=schema,
             )
-
-        # 1. generate a unique handset-id
-        handset_id = random.randint(0, HANDSET_ID_BITS)
-
-        # 2. ensure *ConfigEntry* unique-id uniqueness
-        unique_id = f"tr198a_{handset_id:04x}"
-        await self.async_set_unique_id(unique_id)
-        self._abort_if_unique_id_configured()
-
-        data = {
-            "remote_entity_id": user_input["remote_entity_id"],
-            "handset_id": handset_id,
-            CONF_NAME: user_input.get(CONF_NAME) or f"TR198A Fan {handset_id:04X}",
-            "auto_pair": user_input.get("auto_pair", True),
-        }
-        if user_input.get("power_switch_entity_id"):
-            data["power_switch_entity_id"] = user_input["power_switch_entity_id"]
-
-        title = data[CONF_NAME]
-        return self.async_create_entry(title=title, data=data)
 
     # ───────────────── (optional) OPTIONS FLOW ─────────────────
     @staticmethod
