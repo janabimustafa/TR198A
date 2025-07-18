@@ -8,17 +8,20 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.const import CONF_NAME
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util.percentage import ranged_value_to_percentage, percentage_to_ranged_value
+from homeassistant.util.scaling import int_states_in_range
+import math
 from .const import *
 from .codec import build_operational_command
 
 _LOGGER = logging.getLogger(__name__)
+SPEED_RANGE: tuple[int, int] = (1, 9)       # 0 is *not* in the range
 
 class Tr198aFan(FanEntity, RestoreEntity):
     _attr_supported_features = (
         FanEntityFeature.SET_SPEED | FanEntityFeature.DIRECTION | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF 
     )
-    _speed_range = (1, 10)
-
+    # TR-198A has 9 discrete speeds (1-9) + 0 = off
     def __init__(self,
                  hass: HomeAssistant,
                  name: str,
@@ -81,30 +84,43 @@ class Tr198aFan(FanEntity, RestoreEntity):
     # ─────── FanEntity API ───────
     @property
     def percentage(self):
-        return self._state[ATTR_SPEED]*10
+        """Return current speed as 0-100 % (or None if off)."""
+        return ranged_value_to_percentage(SPEED_RANGE, self._state[ATTR_SPEED])
+    @property
+    def speed_count(self) -> int:
+        """Return number of discrete speeds the fan supports (excluding off)."""
+        return int_states_in_range(SPEED_RANGE)
 
     async def async_set_percentage(self, percentage: int):
-        speed = round(percentage/10)
+        # Convert 0-100 % → 1-9.  round UP to ensure >0 % becomes speed 1
+        speed = math.ceil(percentage_to_ranged_value(SPEED_RANGE, percentage))
+        speed = min(speed, SPEED_RANGE[1])  # clamp to max speed
         if speed > 0:
-           self._prev_speed = speed   # remember last running speed
+            self._prev_speed = speed # remember last running speed
         await self._send_state(speed=speed)
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
     async def async_turn_on(self, *positional, **kwargs):
-        """Turn on to either:
-           • percentage passed by HA (new API), or
-           • remembered speed (fallback)."""
-        # HA still sometimes calls (speed, percentage, preset_mode, ...)
+        """
+        HA can still pass legacy positional args (speed, percentage, preset),
+        so we first look in **kwargs**, then fall back to the 2nd positional.
+        If nothing is supplied, we restore the last remembered speed.
+        """
         percentage = (
             kwargs.get("percentage")                 # new API
             or (positional[1] if len(positional) > 1 else None)  # old style
         )
 
-        if percentage is None:           # no value given → use remembered speed
-            percentage = self._prev_speed * 10
+        if percentage is not None:           # no value given → use remembered speed
+            speed = math.ceil(percentage_to_ranged_value(SPEED_RANGE, percentage))
+            speed = max(1, min(speed, SPEED_RANGE[1]))  # clamp to 1-9
+        else:
+            speed = self._prev_speed
 
-        await self.async_set_percentage(int(percentage))
+        await self._send_state(speed=speed)
+        self._state[ATTR_SPEED] = speed
+        self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs):
         await self._send_state(speed=0)
