@@ -26,6 +26,12 @@
       }
     }
   },
-
+  "state": {
+    "fan_preset_mode": {
+      "breeze_1": "Breeze - 1",
+      "breeze_2": "Breeze - 2",
+      "breeze_3": "Breeze - 3"
+    }
+  },
   "flow_title": "TR198A: {name}"
 }
