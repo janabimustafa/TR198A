@@ -140,12 +140,6 @@ This integration is designed and tested for use with the Broadlink RM4 Pro RF re
 
 ---
 
-## License
-
-MIT License. See `LICENSE` file for details.
-
----
-
 ## Credits
 
 - Reverse engineering and integration by [@janabimustafa](https://github.com/janabimustafa)
