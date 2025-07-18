@@ -26,14 +26,8 @@
       }
     }
   },
-  "state_attributes": {
-    "fan": {
-      "preset_mode": {
-        "breeze_1": "Breeze – Gentle",
-        "breeze_2": "Breeze – Medium",
-        "breeze_3": "Breeze – Strong"
-      }
-    }
-  },
+  "state_attributes.fan.preset_mode.breeze_1": "Breeze – Gentle",
+  "state_attributes.fan.preset_mode.breeze_2": "Breeze – Medium",
+  "state_attributes.fan.preset_mode.breeze_3": "Breeze – Strong",
   "flow_title": "TR198A: {name}"
 }
