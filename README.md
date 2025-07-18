@@ -31,6 +31,28 @@ A custom Home Assistant integration and Python toolkit for controlling TR198A ce
 
 ---
 
+## HACS Installation (Home Assistant Community Store)
+
+You can install this integration via HACS as a custom repository:
+
+1. In Home Assistant, go to **HACS → Integrations**.
+2. Click the three dots (⋮) in the top right and select **Custom repositories**.
+3. Enter the repository URL:
+
+   ```
+   https://github.com/janabimustafa/TR198A
+   ```
+
+   and select **Integration** as the category.
+4. Click **Add**.
+5. Search for "TR198A Ceiling-Fan" in HACS and install it.
+6. Restart Home Assistant.
+7. Add the integration via *Settings → Devices & Services → Add Integration*.
+
+For updates, simply update via HACS when a new version is released.
+
+---
+
 ## Usage
 
 ### Home Assistant
@@ -87,6 +109,19 @@ send_packet(packet, host="192.168.1.42")
 - All RF protocol logic is implemented in `codec.py` and `fancli.py`.
 - No proprietary libraries required for packet building.
 - See `exp/` notebooks for protocol analysis and timing experiments.
+
+---
+
+## Compatibility with Other Remotes
+
+This integration is designed and tested for use with the Broadlink RM4 Pro RF remote, which emulates the TR198A remote protocol. However, it may also work with other RF remotes or ceiling fan receivers that use the same or similar protocol, such as:
+
+- Broadlink RM3 Pro (untested)
+- Other Broadlink RM-series devices with 433 MHz RF (untested)
+- **UC7225T** ceiling fan receivers/remotes (untested, but believed to use a compatible protocol)
+- Any Home Assistant-compatible remote that can transmit raw/base64 RF codes using the TR198A or UC7225T protocol (untested)
+
+**Note:** Functionality and reliability with remotes or receivers other than the RM4 Pro and TR198A are not guaranteed. If you successfully use this integration with another remote or receiver (such as UC7225T), please consider opening an issue or pull request to share your experience!
 
 ---
 
