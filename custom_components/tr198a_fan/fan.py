@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.percentage import ranged_value_to_percentage, percentage_to_ranged_value
 from homeassistant.util.scaling import int_states_in_range
+from homeassistant.helpers.event import async_wait_for_state_change
 import math
 from .const import *
 from .codec import build_operational_command
@@ -108,8 +109,8 @@ class Tr198aFan(FanEntity, RestoreEntity):
 
         # wait briefly for the state machine to reflect the change (<= 2 s)
         try:
-            await self.hass.helpers.event.async_wait_for_state_change(
-                self._power_switch_id, ("on",), timeout=2.0
+            await async_wait_for_state_change(
+                self.hass, self._power_switch_id, ("on",), timeout=2.0
             )
         except asyncio.TimeoutError:
             # Proceed anyway; most switches switch quickly
