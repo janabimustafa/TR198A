@@ -25,6 +25,7 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         {"entity": {"domain": "switch"}}
                     ),
                     vol.Optional(CONF_NAME): str,
+                    vol.Optional("auto_pair", default=True): bool,
                 }
             )
             return self.async_show_form(step_id="user", data_schema=schema)
@@ -41,6 +42,7 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "remote_entity_id": user_input["remote_entity_id"],
             "handset_id": handset_id,
             CONF_NAME: user_input.get(CONF_NAME) or f"TR198A Fan {handset_id:04X}",
+            "auto_pair": user_input.get("auto_pair", True),
         }
         if user_input.get("power_switch_entity_id"):
             data["power_switch_entity_id"] = user_input["power_switch_entity_id"]

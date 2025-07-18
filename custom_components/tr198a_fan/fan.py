@@ -222,6 +222,29 @@ class Tr198aFan(FanEntity, RestoreEntity):
             ATTR_HANDSET_ID: hex(self._handset_id),
         }
 
+async def cycle_power_and_pair(hass, switch_id, handset_id, send_base64_func):
+    from .codec import build_pair_command
+    cmd = build_pair_command(handset_id)
+    state = hass.states.get(switch_id)
+    if state:
+        if state.state == "on":
+            await hass.services.async_call("switch", "turn_off", {"entity_id": switch_id}, blocking=True)
+            await asyncio.sleep(0.5)
+            await hass.services.async_call("switch", "turn_on", {"entity_id": switch_id}, blocking=True)
+            for _ in range(20):
+                await asyncio.sleep(0.1)
+                st = hass.states.get(switch_id)
+                if st and st.state == "on":
+                    break
+        else:
+            await hass.services.async_call("switch", "turn_on", {"entity_id": switch_id}, blocking=True)
+            for _ in range(20):
+                await asyncio.sleep(0.1)
+                st = hass.states.get(switch_id)
+                if st and st.state == "on":
+                    break
+    await send_base64_func(cmd)
+
 async def async_setup_entry(
     hass, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
@@ -230,8 +253,11 @@ async def async_setup_entry(
     switch_id = entry.options.get("power_switch_entity_id") or data.get(
         "power_switch_entity_id"
     )
-    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=switch_id,
-)
+    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=switch_id)
     async_add_entities([fan])
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
     hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access
+
+    # Automatically start pairing if a power switch is associated and auto_pair is enabled
+    if switch_id and data.get("auto_pair", True):
+        await cycle_power_and_pair(hass, switch_id, fan._handset_id, fan._send_base64)

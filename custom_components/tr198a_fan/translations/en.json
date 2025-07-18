@@ -7,7 +7,8 @@
         "data": {
           "remote_entity_id": "Broadlink remote",
           "power_switch_entity_id": "Dependent power switch",
-          "name": "Fan name"
+          "name": "Fan name",
+          "auto_pair": "Automatically pair after adding"
         }
       }
     }
