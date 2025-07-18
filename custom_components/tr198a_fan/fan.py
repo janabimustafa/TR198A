@@ -33,7 +33,8 @@ class Tr198aFan(FanEntity, RestoreEntity):
                  hass: HomeAssistant,
                  name: str,
                  remote_entity: str,
-                 handset_id: int):
+                 handset_id: int,
+                 power_switch: str | None = None):
         self.hass = hass
         self._attr_name          = name
         self._attr_unique_id     = f"tr198a_{handset_id:04x}"
@@ -43,6 +44,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._state[ATTR_BREEZE] = None     # ensure key exists
         self._prev_speed: int = 5      # default «remembered» speed
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
+        self._power_switch_id    = power_switch
         self._attr_device_info = DeviceInfo(
             identifiers={self._dev_id},
             manufacturer="TR-198A",
@@ -87,8 +89,31 @@ class Tr198aFan(FanEntity, RestoreEntity):
             base["trailer_us"] = trailer_us
 
         cmd = build_operational_command(self._handset_id, **base)
+        await self._ensure_power_on()  # ensure power switch is on
         await self._send_base64(cmd)
+    async def _ensure_power_on(self) -> None:
+        """
+        If a power-switch is configured and currently OFF, turn it on and wait
+        one state update (max 2 sec); skip otherwise.
+        """
+        if not self._power_switch_id:
+            return
 
+        if (state := self.hass.states.get(self._power_switch_id)) and state.state == "on":
+            return
+
+        await self.hass.services.async_call(
+            "switch", "turn_on", {"entity_id": self._power_switch_id}, blocking=True
+        )
+
+        # wait briefly for the state machine to reflect the change (<= 2 s)
+        try:
+            await self.hass.helpers.event.async_wait_for_state_change(
+                self._power_switch_id, ("on",), timeout=2.0
+            )
+        except asyncio.TimeoutError:
+            # Proceed anyway; most switches switch quickly
+            pass
     # ─────── FanEntity API ───────
     @property
     def percentage(self):
@@ -186,7 +211,8 @@ async def async_setup_entry(
 ) -> None:
     data = entry.data
     name        = data.get(CONF_NAME) or f"TR198A Fan {data['handset_id']:04X}"
-    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"])
+    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=data.get("power_switch_entity_id"),
+)
     async_add_entities([fan])
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
     hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access

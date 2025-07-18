@@ -21,6 +21,9 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("remote_entity_id"): selector(
                         {"entity": {"domain": "remote"}}
                     ),
+                    vol.Optional("power_switch_entity_id"): selector(
+                        {"entity": {"domain": "switch"}}
+                    ),
                     vol.Optional(CONF_NAME): str,
                 }
             )
@@ -39,6 +42,8 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             "handset_id": handset_id,
             CONF_NAME: user_input.get(CONF_NAME) or f"TR198A Fan {handset_id:04X}",
         }
+        if user_input.get("power_switch_entity_id"):
+            data["power_switch_entity_id"] = user_input["power_switch_entity_id"]
 
         title = data[CONF_NAME]
         return self.async_create_entry(title=title, data=data)
@@ -64,6 +69,10 @@ class Tr198aOptionsFlow(config_entries.OptionsFlow):
                         default=self.entry.data["remote_entity_id"],
                     ): selector({"entity": {"domain": "remote"}}),
                     vol.Optional(
+                        "power_switch_entity_id",
+                        default=self.entry.data.get("power_switch_entity_id"),
+                    ): selector({"entity": {"domain": "switch"}}),
+                    vol.Optional(
                         CONF_NAME, default=self.entry.data.get(CONF_NAME, "")
                     ): str,
                 }
@@ -74,5 +83,9 @@ class Tr198aOptionsFlow(config_entries.OptionsFlow):
         data["remote_entity_id"] = user_input["remote_entity_id"]
         if user_input.get(CONF_NAME):
             data[CONF_NAME] = user_input[CONF_NAME]
+        if user_input.get("power_switch_entity_id"):
+            data["power_switch_entity_id"] = user_input["power_switch_entity_id"]
+        else:
+            data.pop("power_switch_entity_id", None)
 
         return self.async_create_entry(title="", data=data)
