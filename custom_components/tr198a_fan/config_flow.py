@@ -15,20 +15,30 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     # ───────────────── STEP: USER ─────────────────
     async def async_step_user(self, user_input=None):
-        if user_input is None:
-            schema = vol.Schema(
-                {
-                    vol.Required("remote_entity_id"): selector(
-                        {"entity": {"domain": "remote"}}
-                    ),
-                    vol.Optional("power_switch_entity_id"): selector(
-                        {"entity": {"domain": "switch"}}
-                    ),
-                    vol.Optional(CONF_NAME): str,
-                    vol.Optional("auto_pair", default=True): bool,
-                }
+        # Determine if power switch is selected (for disabling auto_pair)
+        power_switch_selected = False
+        if user_input is not None:
+            power_switch_selected = bool(user_input.get("power_switch_entity_id"))
+
+        if user_input is None or not power_switch_selected:
+            # Use data_schema as dict to control disabled state
+            data_schema = {
+                "remote_entity_id": selector({"entity": {"domain": "remote"}}),
+                "power_switch_entity_id": selector({"entity": {"domain": "switch"}}),
+                CONF_NAME: str,
+                "auto_pair": {
+                    "type": "boolean",
+                    "default": True,
+                    "disabled": not power_switch_selected,
+                },
+            }
+            return self.async_show_form(
+                step_id="user",
+                data_schema=data_schema,
+                description_placeholders={
+                    "auto_pair_disabled": not power_switch_selected
+                },
             )
-            return self.async_show_form(step_id="user", data_schema=schema)
 
         # 1. generate a unique handset-id
         handset_id = random.randint(0, HANDSET_ID_BITS)
