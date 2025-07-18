@@ -40,7 +40,7 @@ You can install this integration via HACS as a custom repository:
 3. Enter the repository URL:
 
    ```
-   https://github.com/janabimustafa/TR198A
+   https://github.com/janabimustafa/ha-tr198a-fan
    ```
 
    and select **Integration** as the category.
