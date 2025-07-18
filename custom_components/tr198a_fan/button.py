@@ -8,8 +8,19 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.entity import Entity
-from .const import *
-from .codec import build_pair_command, build_operational_command
+from .const import (
+    DOMAIN,
+    SERVICE_PAIR,
+    SERVICE_LIGHT_TOGGLE,
+    SERVICE_DIM_UP,
+    SERVICE_DIM_DOWN,
+    ATTR_LIGHT
+)
+from .codec import build_pair_command
+import asyncio
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from .fan import Tr198aFan
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +57,6 @@ async def register_buttons(hass: HomeAssistant, fan_entity: "Tr198aFan"):
 
 async def _dispatch(hass: HomeAssistant, call, svc: str):
     """call.data MUST contain entity_id of the fan"""
-    entity_ids = call.data.get("entity_id")
     for eid in hass.helpers.entity_component.async_extract_entity_ids(call):
         fan = hass.data[DOMAIN].get(eid)
         if fan:
@@ -54,6 +64,31 @@ async def _dispatch(hass: HomeAssistant, call, svc: str):
 
 async def _execute(fan: "Tr198aFan", svc: str):
     if svc == SERVICE_PAIR:
+        # Handle power switch logic for pairing
+        power_switch_id = getattr(fan, '_power_switch_id', None)
+        hass = getattr(fan, 'hass', None)
+        if power_switch_id and hass:
+            state = hass.states.get(power_switch_id)
+            if state:
+                if state.state == "on":
+                    # Flick off then on
+                    await hass.services.async_call("switch", "turn_off", {"entity_id": power_switch_id}, blocking=True)
+                    await asyncio.sleep(0.5)  # brief pause to allow relay to drop
+                    await hass.services.async_call("switch", "turn_on", {"entity_id": power_switch_id}, blocking=True)
+                    # Wait for state to reflect ON
+                    for _ in range(20):
+                        await asyncio.sleep(0.1)
+                        st = hass.states.get(power_switch_id)
+                        if st and st.state == "on":
+                            break
+                else:
+                    # If off, just turn on
+                    await hass.services.async_call("switch", "turn_on", {"entity_id": power_switch_id}, blocking=True)
+                    for _ in range(20):
+                        await asyncio.sleep(0.1)
+                        st = hass.states.get(power_switch_id)
+                        if st and st.state == "on":
+                            break
         cmd = build_pair_command(fan._handset_id)
         await fan._send_base64(cmd)          # pairing packet is special
         return
@@ -114,7 +149,6 @@ async def async_setup_entry(
         return
     async def _service_handler(call):
         svc   = call.service
-        fans  = call.data.get("entity_id", [])
         for eid in hass.helpers.entity_component.async_extract_entity_ids(call):
             fan_ent = hass.data[DOMAIN][entry.entry_id].get("fan_entity")
             if fan_ent and fan_ent.entity_id == eid:

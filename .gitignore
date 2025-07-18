@@ -1,0 +1,50 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Python virtual environments
+venv/
+.env/
+ENV/
+.venv/
+
+# Home Assistant files
+home-assistant.log
+home-assistant_v2.db
+
+# Test, coverage, and build outputs
+.coverage
+htmlcov/
+dist/
+build/
+.eggs/
+*.egg-info/
+
+# Miscellaneous
+*.log
+*.bak
+*.swp
+
+# Ignore experiment outputs
+exp/*.out
+exp/*.bin
+exp/*.wav
+exp/*.csv
+exp/*.png
+exp/*.jpg
+exp/*.json
+exp/*.npz
+exp/*.npy

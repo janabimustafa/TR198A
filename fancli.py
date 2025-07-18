@@ -66,7 +66,7 @@ def _dir_bits(direction: Dir) -> int:  # bits 5‑4
 
 def _speed_bits(speed: int | None, breeze: Breeze) -> int:  # bits 9‑6
     if breeze:
-        return {1: 0b1101, 2: 0b1111, 3: 0b1110}[breeze]
+        return {1: 0b1011, 2: 0b1111, 3: 0b1101}[breeze]
     if speed is None:
         return 0
     if speed < 0 or speed > 10:
@@ -301,7 +301,7 @@ def cli(argv: Sequence[str] | None = None) -> None:
         radio_repeats = RADIO_REPEATS
         trailer_us = TRAILER_US
         if args.dim and args.dim_steps:
-            #scale radio repeates from 0xDF to 0xEF based on dim_steps
+            #scale radio repeates from 0xC9 to 0xEF based on dim_steps
             radio_repeats = 0xC9 + (args.dim_steps - 1) * 4
             trailer_us = 394
         payload = bits23(
