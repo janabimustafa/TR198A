@@ -70,7 +70,10 @@ class Tr198aOptionsFlow(config_entries.OptionsFlow):
                     ): selector({"entity": {"domain": "remote"}}),
                     vol.Optional(
                         "power_switch_entity_id",
-                        default=self.entry.data.get("power_switch_entity_id"),
+                        default=(
+                            self.entry.options.get("power_switch_entity_id")
+                            or self.entry.data.get("power_switch_entity_id")
+                        ),
                     ): selector({"entity": {"domain": "switch"}}),
                     vol.Optional(
                         CONF_NAME, default=self.entry.data.get(CONF_NAME, "")

@@ -211,7 +211,10 @@ async def async_setup_entry(
 ) -> None:
     data = entry.data
     name        = data.get(CONF_NAME) or f"TR198A Fan {data['handset_id']:04X}"
-    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=data.get("power_switch_entity_id"),
+    switch_id = entry.options.get("power_switch_entity_id") or data.get(
+        "power_switch_entity_id"
+    )
+    fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=switch_id,
 )
     async_add_entities([fan])
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
