@@ -33,7 +33,7 @@ def _dir_bits(direction: Dir) -> int:
 
 def _speed_bits(speed: int | None, breeze: Breeze) -> int:
     if breeze:
-        return {1: 0b1101, 2: 0b1111, 3: 0b1110}[breeze]
+        return {1: 0b1011, 2: 0b1111, 3: 0b1101}[breeze]
     if speed is None:
         return 0
     if not 0 <= speed <= 10:
