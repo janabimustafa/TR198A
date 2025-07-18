@@ -28,6 +28,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         | FanEntityFeature.PRESET_MODE 
     )
     _attr_preset_modes = PRESET_BREEZE
+    _attr_translation_key = "tr198a_fan"
     # TR-198A has 9 discrete speeds (1-9) + 0 = off
     def __init__(self,
                  hass: HomeAssistant,
