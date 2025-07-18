@@ -16,11 +16,18 @@ from .codec import build_operational_command
 
 _LOGGER = logging.getLogger(__name__)
 SPEED_RANGE: tuple[int, int] = (1, 9)       # 0 is *not* in the range
+# List of user-facing preset names
+PRESET_BREEZE = ["breeze_1", "breeze_2", "breeze_3"]
 
 class Tr198aFan(FanEntity, RestoreEntity):
     _attr_supported_features = (
-        FanEntityFeature.SET_SPEED | FanEntityFeature.DIRECTION | FanEntityFeature.TURN_ON | FanEntityFeature.TURN_OFF 
+        FanEntityFeature.SET_SPEED 
+        | FanEntityFeature.DIRECTION 
+        | FanEntityFeature.TURN_ON 
+        | FanEntityFeature.TURN_OFF
+        | FanEntityFeature.PRESET_MODE 
     )
+    _attr_preset_modes = PRESET_BREEZE
     # TR-198A has 9 discrete speeds (1-9) + 0 = off
     def __init__(self,
                  hass: HomeAssistant,
@@ -33,6 +40,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._remote_entity_id   = remote_entity
         self._handset_id         = handset_id
         self._state: dict[str, Any] = DEF_STATE.copy()
+        self._state[ATTR_BREEZE] = None     # ensure key exists
         self._prev_speed: int = 5      # default «remembered» speed
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
         self._attr_device_info = DeviceInfo(
@@ -97,7 +105,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         speed = min(speed, SPEED_RANGE[1])  # clamp to max speed
         if speed > 0:
             self._prev_speed = speed # remember last running speed
-        await self._send_state(speed=speed)
+        await self._send_state(speed=speed, breeze=None)
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
@@ -118,7 +126,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         else:
             speed = self._prev_speed
 
-        await self._send_state(speed=speed)
+        await self._send_state(speed=speed, breeze=None)
         self._state[ATTR_SPEED] = speed
         self.async_write_ha_state()
 
@@ -138,12 +146,26 @@ class Tr198aFan(FanEntity, RestoreEntity):
         await self._send_state(direction=direction)
         self._state[ATTR_DIRECTION] = direction
         self.async_write_ha_state()
+    @property
+    def preset_mode(self) -> Optional[str]:
+        lvl = self._state[ATTR_BREEZE]
+        return None if lvl is None else PRESET_BREEZE[lvl - 1]
 
+    async def async_set_preset_mode(self, preset_mode: str) -> None:
+        """Set one of the three breeze modes."""
+        if preset_mode not in PRESET_BREEZE:
+            raise ValueError(f"Unsupported preset {preset_mode}")
+
+        level = PRESET_BREEZE.index(preset_mode) + 1  # 1,2,3
+        await self._send_state(breeze=level, speed=None)  # speed bits replaced
+        self._state[ATTR_BREEZE] = level
+        self.async_write_ha_state()
     # ─────── RestoreEntity ───────
     async def async_added_to_hass(self):
         if (state := await self.async_get_last_state()) is not None:
             self._state[ATTR_SPEED]     = int(state.attributes.get(ATTR_SPEED, 0))
             self._state[ATTR_DIRECTION] = state.attributes.get(ATTR_DIRECTION, "reverse")
+            self._state[ATTR_BREEZE]    = state.attributes.get(ATTR_BREEZE)
 
     # ─────── state attributes ───────
     @property
