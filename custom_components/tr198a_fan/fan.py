@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, Optional
 import logging, asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.components.fan import FanEntity, FanEntityFeature
@@ -11,7 +11,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.percentage import ranged_value_to_percentage, percentage_to_ranged_value
 from homeassistant.util.scaling import int_states_in_range
 import math
-from .const import *
+from .const import (
+    DOMAIN,
+    ATTR_SPEED,
+    ATTR_DIRECTION,
+    ATTR_TIMER,
+    ATTR_BREEZE,
+    ATTR_LIGHT,
+    ATTR_HANDSET_ID,
+    DEF_STATE
+)
 from .codec import build_operational_command
 
 _LOGGER = logging.getLogger(__name__)
@@ -196,6 +205,10 @@ class Tr198aFan(FanEntity, RestoreEntity):
             self._state[ATTR_SPEED]     = int(state.attributes.get(ATTR_SPEED, 0))
             self._state[ATTR_DIRECTION] = state.attributes.get(ATTR_DIRECTION, "reverse")
             self._state[ATTR_BREEZE]    = state.attributes.get(ATTR_BREEZE)
+        # Ensure the fan entity is in a valid state after pairing
+        # If just paired, force a state update to Home Assistant
+        if self._state[ATTR_SPEED] == 0:
+            self.async_write_ha_state()
 
     # ─────── state attributes ───────
     @property

@@ -1,0 +1,8 @@
+{
+  "name": "TR198A Ceiling-Fan",
+  "content_in_root": false,
+  "domains": ["fan", "button"],
+  "country": "US",
+  "homeassistant": "2025.7.1",
+  "render_readme": true
+}
