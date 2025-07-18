@@ -11,6 +11,9 @@
           "auto_pair": "Automatically pair after adding"
         }
       }
+    },
+    "error": {
+      "auto_pair_requires_power_switch": "A power switch must be selected to use automatic pairing."
     }
   },
 
@@ -43,8 +46,5 @@
       }
     }
   },
-  "flow_title": "TR198A: {name}",
-  "error": {
-    "auto_pair_requires_power_switch": "A power switch must be selected to use automatic pairing."
-  }
+  "flow_title": "TR198A: {name}"
 }
