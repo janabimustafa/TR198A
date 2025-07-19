@@ -210,6 +210,14 @@ class Tr198aFan(FanEntity, RestoreEntity):
         if self._state[ATTR_SPEED] == 0:
             self.async_write_ha_state()
 
+        self._subscribe_power_switch()
+
+    async def async_will_remove_from_hass(self):
+        # Unsubscribe from power switch listener if present
+        if hasattr(self, "_unsub_power_switch") and self._unsub_power_switch:
+            self._unsub_power_switch()
+        await super().async_will_remove_from_hass()
+
     # ─────── state attributes ───────
     @property
     def extra_state_attributes(self):
@@ -221,6 +229,31 @@ class Tr198aFan(FanEntity, RestoreEntity):
             ATTR_LIGHT: self._state[ATTR_LIGHT],
             ATTR_HANDSET_ID: hex(self._handset_id),
         }
+
+    def _subscribe_power_switch(self):
+        if not self._power_switch_id:
+            return
+        # Subscribe to state changes of the power switch
+        async def power_switch_listener(event):
+            new_state = event.data.get("new_state")
+            if new_state is None:
+                return
+            if new_state.state == "off":
+                # Set fan as off
+                self._state[ATTR_SPEED] = 0
+                self._state[ATTR_BREEZE] = None
+                self.async_write_ha_state()
+            elif new_state.state == "on":
+                # Restore previous speed if any, or leave off
+                if self._prev_speed > 0:
+                    self._state[ATTR_SPEED] = self._prev_speed
+                    self.async_write_ha_state()
+        self._unsub_power_switch = self.hass.bus.async_listen(
+            "state_changed",
+            lambda event: (
+                event.data.get("entity_id") == self._power_switch_id and power_switch_listener(event)
+            ),
+        )
 
 async def cycle_power_and_pair(hass, switch_id, handset_id, send_base64_func):
     from .codec import build_pair_command
