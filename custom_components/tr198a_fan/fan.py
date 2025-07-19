@@ -22,6 +22,7 @@ from .const import (
     DEF_STATE
 )
 from .codec import build_operational_command
+from homeassistant.helpers.event import async_track_state_change_event
 
 _LOGGER = logging.getLogger(__name__)
 SPEED_RANGE: tuple[int, int] = (1, 9)       # 0 is *not* in the range
@@ -213,9 +214,6 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._subscribe_power_switch()
 
     async def async_will_remove_from_hass(self):
-        # Unsubscribe from power switch listener if present
-        if hasattr(self, "_unsub_power_switch") and self._unsub_power_switch:
-            self._unsub_power_switch()
         await super().async_will_remove_from_hass()
 
     # ─────── state attributes ───────
@@ -233,7 +231,10 @@ class Tr198aFan(FanEntity, RestoreEntity):
     def _subscribe_power_switch(self):
         if not self._power_switch_id:
             return
-        # Subscribe to state changes of the power switch
+        # Remove previous listener if present
+        if hasattr(self, "_unsub_power_switch") and self._unsub_power_switch:
+            self._unsub_power_switch()
+        # Use async_track_state_change_event for reliable state tracking
         async def power_switch_listener(event):
             new_state = event.data.get("new_state")
             if new_state is None:
@@ -244,16 +245,14 @@ class Tr198aFan(FanEntity, RestoreEntity):
                 self._state[ATTR_BREEZE] = None
                 self.async_write_ha_state()
             elif new_state.state == "on":
-                # Restore previous speed if any, or leave off
+                # Only restore if the fan was previously running
                 if self._prev_speed > 0:
                     self._state[ATTR_SPEED] = self._prev_speed
                     self.async_write_ha_state()
-        self._unsub_power_switch = self.hass.bus.async_listen(
-            "state_changed",
-            lambda event: (
-                event.data.get("entity_id") == self._power_switch_id and power_switch_listener(event)
-            ),
+        self._unsub_power_switch = async_track_state_change_event(
+            self.hass, [self._power_switch_id], power_switch_listener
         )
+        self.async_on_remove(self._unsub_power_switch)
 
 async def cycle_power_and_pair(hass, switch_id, handset_id, send_base64_func):
     from .codec import build_pair_command
