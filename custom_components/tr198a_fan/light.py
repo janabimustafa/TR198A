@@ -22,6 +22,13 @@ class Tr198aLight(LightEntity):
         return self.fan._state[ATTR_LIGHT]
 
     async def async_turn_on(self, **kwargs):
+        # Ensure power switch is on before toggling the light
+        if self.fan._power_switch_id:
+            state = self.hass.states.get(self.fan._power_switch_id)
+            if not state or state.state != "on":
+                await self.hass.services.async_call(
+                    "switch", "turn_on", {"entity_id": self.fan._power_switch_id}, blocking=True
+                )
         if not self.fan._state[ATTR_LIGHT]:
             await self.fan._send_state(light_toggle=True)
             self.fan._state[ATTR_LIGHT] = True
