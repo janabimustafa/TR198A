@@ -10,9 +10,9 @@ ATTR_LIGHT           = "light_on"        # bool
 ATTR_POWER           = "power_on"        # bool (speed>0)
 
 SERVICE_PAIR         = "pair"
-SERVICE_LIGHT_TOGGLE = "light_toggle"
 SERVICE_DIM_UP       = "dim_up"
 SERVICE_DIM_DOWN     = "dim_down"
+SERVICE_SYNC_LIGHT           = "sync_light"
 
 # default values
 DEF_STATE = {

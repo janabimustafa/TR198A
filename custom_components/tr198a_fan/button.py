@@ -7,14 +7,12 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity import Entity
 from .const import (
     DOMAIN,
     SERVICE_PAIR,
-    SERVICE_LIGHT_TOGGLE,
     SERVICE_DIM_UP,
-    SERVICE_DIM_DOWN,
-    ATTR_LIGHT
+    SERVICE_SYNC_LIGHT,
+    SERVICE_DIM_DOWN
 )
 from .codec import build_pair_command
 from typing import TYPE_CHECKING
@@ -24,42 +22,11 @@ if TYPE_CHECKING:
 _LOGGER = logging.getLogger(__name__)
 
 BUTTONS = {
-    SERVICE_PAIR:         "Pair Remote",
-    SERVICE_LIGHT_TOGGLE: "Toggle Light",
-    SERVICE_DIM_UP:       "Dim Up",
-    SERVICE_DIM_DOWN:     "Dim Down",
+    SERVICE_PAIR,
+    SERVICE_DIM_UP,
+    SERVICE_DIM_DOWN,
+    SERVICE_SYNC_LIGHT
 }
-
-async def register_buttons(hass: HomeAssistant, fan_entity: "Tr198aFan"):
-    entities: list[Entity] = []
-    for svc, label in BUTTONS.items():
-        button = _Tr198aButton(fan_entity, svc, label)
-        entities.append(button)
-    # add_entities is only available during platform setup; instead use EntityPlatform
-    platform = hass.data["entity_platform"][fan_entity.platform.platform_name]
-    platform.async_add_entities(entities)
-
-    # register matching services once
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
-    if "services_registered" in hass.data[DOMAIN]:
-        return
-    hass.services.async_register(
-        DOMAIN, SERVICE_PAIR, lambda call: _dispatch(hass, call, SERVICE_PAIR))
-    hass.services.async_register(
-        DOMAIN, SERVICE_LIGHT_TOGGLE, lambda call: _dispatch(hass, call, SERVICE_LIGHT_TOGGLE))
-    hass.services.async_register(
-        DOMAIN, SERVICE_DIM_UP, lambda call: _dispatch(hass, call, SERVICE_DIM_UP))
-    hass.services.async_register(
-        DOMAIN, SERVICE_DIM_DOWN, lambda call: _dispatch(hass, call, SERVICE_DIM_DOWN))
-    hass.data[DOMAIN]["services_registered"] = True
-
-async def _dispatch(hass: HomeAssistant, call, svc: str):
-    """call.data MUST contain entity_id of the fan"""
-    for eid in hass.helpers.entity_component.async_extract_entity_ids(call):
-        fan = hass.data[DOMAIN].get(eid)
-        if fan:
-            await _execute(fan, svc)
 
 async def _execute(fan: "Tr198aFan", svc: str):
     if svc == SERVICE_PAIR:
@@ -72,10 +39,9 @@ async def _execute(fan: "Tr198aFan", svc: str):
         cmd = build_pair_command(fan._handset_id)
         await fan._send_base64(cmd)
         return
-    if svc == SERVICE_LIGHT_TOGGLE:
+    if svc == SERVICE_SYNC_LIGHT:
         await fan._send_state(light_toggle=True)
-        fan._state[ATTR_LIGHT] = not fan._state[ATTR_LIGHT]
-
+        # Do not update fan._state[ATTR_LIGHT]
     else:  # DIM UP / DOWN  — send 2 steps
         steps = 2
         radio = 0xC9 + (steps - 1) * 4
@@ -89,12 +55,12 @@ class _Tr198aButton(ButtonEntity):
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, hass, entry_id: str, fan_unique_id: str,
-                 svc: str, label: str):
+                 svc: str):
         self.hass = hass
         self._entry_id = entry_id
         self._fan_uid  = fan_unique_id
         self._svc      = svc
-        self._attr_name = label
+        self._attr_translation_key = svc
         self._attr_unique_id = f"{fan_unique_id}_{svc}"
         # share the same HA Device as the fan
         self._attr_device_info = DeviceInfo(
@@ -119,8 +85,8 @@ async def async_setup_entry(
         fan_uid = store["fan_unique_id"]
 
     entities = [
-        _Tr198aButton(hass, entry.entry_id, fan_uid, svc, label)
-        for svc, label in BUTTONS.items()
+        _Tr198aButton(hass, entry.entry_id, fan_uid, svc)
+        for svc in BUTTONS.items()
     ]
     async_add_entities(entities)
 

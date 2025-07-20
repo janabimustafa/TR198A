@@ -287,8 +287,13 @@ async def async_setup_entry(
     )
     fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=switch_id)
     async_add_entities([fan])
+    # Add the light entity
+    from .light import Tr198aLight
+    light_entity = Tr198aLight(fan)
+    async_add_entities([light_entity])
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
     hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access
+    hass.data[DOMAIN][entry.entry_id]["light_entity"]  = light_entity
 
     # Automatically start pairing if a power switch is associated and auto_pair is enabled
     if switch_id and data.get("auto_pair", True):

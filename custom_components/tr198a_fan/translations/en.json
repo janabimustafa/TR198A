@@ -41,10 +41,31 @@
           }
         }
       }
+    },
+    "light": {
+      "tr198a_light": {
+        "name": "Fan Light",
+        "state": {
+          "on": "On",
+          "off": "Off"
+        }
+      },
+      "tr198a_sync_light": {
+        "name": "Sync Light",
+        "state": {
+          "press": "Synchronize Light State"
+        }
+      }
     }
   },
   "flow_title": "TR198A: {name}",
   "error": {
     "auto_pair_requires_power_switch": "A power switch must be selected to use automatic pairing."
+  },
+  "button": {
+    "pair": "Pair Remote",
+    "dim_up": "Dim Up",
+    "dim_down": "Dim Down",
+    "sync_light": "Sync Light"
   }
 }

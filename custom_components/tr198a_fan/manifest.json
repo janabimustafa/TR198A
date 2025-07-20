@@ -2,9 +2,11 @@
   "domain": "tr198a_fan",
   "name": "TR198A Ceiling-Fan",
   "version": "1.0.0",
+  "documentation": "https://github.com/janabimustafa/ha-tr198a-fan",
   "requirements": [],
   "dependencies": [],
-  "config_flow": true,
   "codeowners": ["@janabimustafa"],
-  "iot_class": "local_polling"
+  "config_flow": true,
+  "iot_class": "local_push",
+  "supported_platforms": ["fan", "button", "light"]
 }
