@@ -175,7 +175,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
             speed = math.ceil(percentage_to_ranged_value(SPEED_RANGE, percentage))
             speed = max(1, min(speed, SPEED_RANGE[1]))  # clamp to 1-9
         else:
-            speed = self._prev_speed
+            speed = self._prev_speed or 1
 
         await self._send_state(speed=speed, breeze=None)
         self._state[ATTR_SPEED] = speed
