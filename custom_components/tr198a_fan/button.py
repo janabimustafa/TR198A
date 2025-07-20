@@ -86,7 +86,7 @@ async def async_setup_entry(
 
     entities = [
         _Tr198aButton(hass, entry.entry_id, fan_uid, svc)
-        for svc in BUTTONS.items()
+        for svc in BUTTONS
     ]
     async_add_entities(entities)
 
