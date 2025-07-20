@@ -52,9 +52,9 @@ class Tr198aLight(LightEntity):
     def color_mode(self):
         return ColorMode.ONOFF
 
-def async_setup_entry(hass, entry, async_add_entities):
+async def async_setup_entry(hass, entry, async_add_entities):
     fan_entity = hass.data[DOMAIN][entry.entry_id]["fan_entity"]
     light = Tr198aLight(fan_entity)
     async_add_entities([light])
-    hass.data[DOMAIN][entry.entry_id]["light_entity"]  = light
+    hass.data[DOMAIN][entry.entry_id]["light_entity"] = light
 

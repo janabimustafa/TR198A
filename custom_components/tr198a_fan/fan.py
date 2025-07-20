@@ -260,6 +260,10 @@ class Tr198aFan(FanEntity, RestoreEntity):
                 self._state[ATTR_BREEZE] = None
                 self._state[ATTR_LIGHT] = False
                 self.async_write_ha_state()
+                # Also update the light entity state
+                light_entity = self.hass.data[DOMAIN][self._entry_id].get("light_entity") if hasattr(self, '_entry_id') else None
+                if light_entity:
+                    light_entity.async_write_ha_state()
             elif new_state.state == "on":
                 # Only restore if the fan was previously running
                 if self._prev_speed > 0:
@@ -268,6 +272,10 @@ class Tr198aFan(FanEntity, RestoreEntity):
                 if self._prev_light:
                     self._state[ATTR_LIGHT] = True
                     self.async_write_ha_state()
+                    # Also update the light entity state
+                    light_entity = self.hass.data[DOMAIN][self._entry_id].get("light_entity") if hasattr(self, '_entry_id') else None
+                    if light_entity:
+                        light_entity.async_write_ha_state()
         self._unsub_power_switch = async_track_state_change_event(
             self.hass, [self._power_switch_id], power_switch_listener
         )

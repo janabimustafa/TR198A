@@ -10,15 +10,21 @@ light_toggle:
   fields:
     entity_id:
       description: Fan entity
+
 dim_up:
   description: One dim-up step (0-10 repeat automatically handled).
   fields:
     entity_id:
+      description: Fan entity
+
 dim_down:
   description: One dim-down step.
   fields:
     entity_id:
+      description: Fan entity
+
 sync_light:
   description: Flick the fan's light relay without changing Home Assistant's state (for resync).
   fields:
     entity_id:
+      description: Fan entity
