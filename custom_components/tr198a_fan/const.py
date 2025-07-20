@@ -14,6 +14,8 @@ SERVICE_DIM_UP       = "dim_up"
 SERVICE_DIM_DOWN     = "dim_down"
 SERVICE_SYNC_LIGHT           = "sync_light"
 
+DIM_STEP_SIZE = "dim_step_size"
+
 # default values
 DEF_STATE = {
     ATTR_SPEED: 0,

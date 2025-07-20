@@ -5,7 +5,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.selector import selector
-from .const import DOMAIN
+from .const import DOMAIN, DIM_STEP_SIZE
 
 HANDSET_ID_BITS = 0x1FFF  # 13-bit max
 
@@ -23,6 +23,7 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional("power_switch_entity_id"): selector({"entity": {"domain": "switch"}}),
                 vol.Optional(CONF_NAME): str,
                 vol.Optional("auto_pair", default=True): bool,
+                vol.Optional(DIM_STEP_SIZE, default=2): int,
             }
         )
 
@@ -55,6 +56,8 @@ class Tr198aConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if power_switch:
                 data["power_switch_entity_id"] = power_switch
             title = data[CONF_NAME]
+            data[DIM_STEP_SIZE] = user_input[DIM_STEP_SIZE]
+
             return self.async_create_entry(title=title, data=data)
         else:
             return self.async_show_form(
@@ -92,6 +95,10 @@ class Tr198aOptionsFlow(config_entries.OptionsFlow):
                     vol.Optional(
                         CONF_NAME, default=self.entry.data.get(CONF_NAME, "")
                     ): str,
+                    vol.Optional(
+                        DIM_STEP_SIZE,
+                        default=self.entry.options.get(DIM_STEP_SIZE, 2),
+                    ): int,
                 }
             )
             return self.async_show_form(step_id="init", data_schema=schema)
@@ -104,5 +111,6 @@ class Tr198aOptionsFlow(config_entries.OptionsFlow):
             data["power_switch_entity_id"] = user_input["power_switch_entity_id"]
         else:
             data.pop("power_switch_entity_id", None)
+        data[DIM_STEP_SIZE] = user_input[DIM_STEP_SIZE]
 
         return self.async_create_entry(title="", data=data)

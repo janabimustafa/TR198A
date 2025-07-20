@@ -8,7 +8,8 @@
           "remote_entity_id": "Broadlink remote",
           "power_switch_entity_id": "Dependent power switch",
           "name": "Fan name",
-          "auto_pair": "Automatically pair after adding"
+          "auto_pair": "Automatically pair after adding",
+          "dim_step_size": "Number of steps to dim the light when using the Dim Up/Down buttons. Default is 2."
         }
       }
     }
@@ -22,7 +23,8 @@
         "data": {
           "remote_entity_id": "Broadlink remote",
           "power_switch_entity_id": "Dependent power switch",
-          "name": "Fan name"
+          "name": "Fan name",
+          "dim_step_size": "Number of steps to dim the light when using the Dim Up/Down buttons. Default is 2."
         }
       }
     }
@@ -52,10 +54,22 @@
       }
     },
     "button": {
-      "pair": { "name": "Pair Remote" },
-      "dim_up": { "name": "Dim Up" },
-      "dim_down": { "name": "Dim Down" },
-      "sync_light": { "name": "Sync Light" }
+      "pair": {
+        "name": "Pair Remote",
+        "description": "Put the fan into pairing mode."
+      },
+      "dim_up": {
+        "name": "Dim Up",
+        "description": "Increase the light brightness by the configured step size."
+      },
+      "dim_down": {
+        "name": "Dim Down",
+        "description": "Decrease the light brightness by the configured step size."
+      },
+      "sync_light": {
+        "name": "Sync Light",
+        "description": "Synchronize the light state with the remote."
+      }
     }
   },
   "flow_title": "TR198A: {name}",

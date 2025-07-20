@@ -12,7 +12,8 @@ from .const import (
     SERVICE_PAIR,
     SERVICE_DIM_UP,
     SERVICE_SYNC_LIGHT,
-    SERVICE_DIM_DOWN
+    SERVICE_DIM_DOWN,
+    DIM_STEP_SIZE
 )
 from .codec import build_pair_command
 from typing import TYPE_CHECKING
@@ -57,9 +58,16 @@ async def _execute(fan: "Tr198aFan", svc: str):
         return
     if svc == SERVICE_SYNC_LIGHT:
         await fan._send_state(light_toggle=True)
-        # Do not update fan._state[ATTR_LIGHT]
-    else:  # DIM UP / DOWN  — send 2 steps
-        steps = 2
+    else:  # DIM UP / DOWN — use configured step size
+        # Fetch dim_step_size from config entry options or data, default to 2
+        entry_id = getattr(fan, '_entry_id', None)
+        hass = getattr(fan, 'hass', None)
+        step_size = 2
+        if entry_id and hass:
+            entry = next((e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id == entry_id), None)
+            if entry:
+                step_size = entry.options.get(DIM_STEP_SIZE, entry.data.get(DIM_STEP_SIZE, 2))
+        steps = step_size
         radio = 0xC9 + (steps - 1) * 4
         trailer = 394
         dir_ = "up" if svc == SERVICE_DIM_UP else "down"
