@@ -44,4 +44,7 @@ class Tr198aLight(LightEntity):
 
 def async_setup_entry(hass, entry, async_add_entities):
     fan_entity = hass.data[DOMAIN][entry.entry_id]["fan_entity"]
-    async_add_entities([Tr198aLight(fan_entity)])
+    light = Tr198aLight(fan_entity)
+    async_add_entities([light])
+    hass.data[DOMAIN][entry.entry_id]["light_entity"]  = light
+
