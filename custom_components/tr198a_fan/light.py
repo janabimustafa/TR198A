@@ -8,6 +8,7 @@ class Tr198aLight(LightEntity):
     _attr_should_poll = False
     _attr_translation_key = "tr198a_light"
     _attr_supported_color_modes = {ColorMode.ONOFF}
+    _attr_color_mode = ColorMode.ONOFF
 
     def __init__(self, fan_entity):
         self.fan = fan_entity
