@@ -63,9 +63,9 @@
     "auto_pair_requires_power_switch": "A power switch must be selected to use automatic pairing."
   },
   "button": {
-    "pair": "Pair Remote",
-    "dim_up": "Dim Up",
-    "dim_down": "Dim Down",
-    "sync_light": "Sync Light"
+    "pair": { "name": "Pair Remote" },
+    "dim_up": { "name": "Dim Up" },
+    "dim_down": { "name": "Dim Down" },
+    "sync_light": { "name": "Sync Light" }
   }
 }
