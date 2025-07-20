@@ -35,9 +35,25 @@ async def _execute(fan: "Tr198aFan", svc: str):
         if power_switch_id and hass:
             from .fan import cycle_power_and_pair
             await cycle_power_and_pair(hass, power_switch_id, fan._handset_id, fan._send_base64)
+            # Mark as paired in config entry options
+            entry_id = fan._entry_id if hasattr(fan, '_entry_id') else None
+            if entry_id:
+                entry = next((e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id == entry_id), None)
+                if entry:
+                    new_options = dict(entry.options)
+                    new_options["paired"] = True
+                    hass.config_entries.async_update_entry(entry, options=new_options)
             return
         cmd = build_pair_command(fan._handset_id)
         await fan._send_base64(cmd)
+                    # Mark as paired in config entry options
+        entry_id = fan._entry_id if hasattr(fan, '_entry_id') else None
+        if entry_id:
+            entry = next((e for e in hass.config_entries.async_entries(DOMAIN) if e.entry_id == entry_id), None)
+            if entry:
+                new_options = dict(entry.options)
+                new_options["paired"] = True
+                hass.config_entries.async_update_entry(entry, options=new_options)
         return
     if svc == SERVICE_SYNC_LIGHT:
         await fan._send_state(light_toggle=True)
