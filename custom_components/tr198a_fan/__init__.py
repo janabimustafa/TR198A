@@ -13,7 +13,8 @@ async def async_setup(hass: HomeAssistant, _: dict) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {}
     # ← we forward to fan, button, AND light platforms
-    await hass.config_entries.async_forward_entry_setups(entry, {"fan", "button", "light"})
+    await hass.config_entries.async_forward_entry_setups(entry, {"fan"})
+    await hass.config_entries.async_forward_entry_setups(entry, {"button", "light"})
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:

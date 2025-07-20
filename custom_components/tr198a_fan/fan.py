@@ -287,7 +287,6 @@ async def async_setup_entry(
     )
     fan = Tr198aFan(hass, name, data["remote_entity_id"], data["handset_id"], power_switch=switch_id)
     async_add_entities([fan])
-    # Add the light entity
     hass.data[DOMAIN][entry.entry_id]["fan_unique_id"] = fan.unique_id
     hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access
 

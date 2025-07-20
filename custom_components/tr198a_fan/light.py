@@ -1,5 +1,5 @@
 from __future__ import annotations
-from homeassistant.components.light import LightEntity, LightEntityFeature
+from homeassistant.components.light import LightEntity, ColorMode
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.const import CONF_NAME
 from .const import DOMAIN, ATTR_LIGHT
@@ -7,7 +7,7 @@ from .const import DOMAIN, ATTR_LIGHT
 class Tr198aLight(LightEntity):
     _attr_should_poll = False
     _attr_translation_key = "tr198a_light"
-    _attr_supported_color_modes = {"onoff"}
+    _attr_supported_color_modes = {ColorMode.ONOFF}
 
     def __init__(self, fan_entity):
         self.fan = fan_entity
@@ -40,7 +40,7 @@ class Tr198aLight(LightEntity):
 
     @property
     def color_mode(self):
-        return "onoff"
+        return ColorMode.ONOFF
 
 def async_setup_entry(hass, entry, async_add_entities):
     fan_entity = hass.data[DOMAIN][entry.entry_id]["fan_entity"]
