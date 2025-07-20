@@ -3,7 +3,7 @@ from typing import Any, Optional
 import logging, asyncio
 from homeassistant.core import HomeAssistant
 from homeassistant.components.fan import FanEntity, FanEntityFeature
-from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.helpers.restore_state import RestoreEntity, ExtraStoredData
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.const import CONF_NAME
 from homeassistant.config_entries import ConfigEntry
@@ -137,6 +137,17 @@ class Tr198aFan(FanEntity, RestoreEntity):
     def speed_count(self) -> int:
         """Return number of discrete speeds the fan supports (excluding off)."""
         return int_states_in_range(SPEED_RANGE)
+    async def async_get_last_extra_data(self) -> ExtraStoredData | None:
+        return ExtraStoredData(
+            {
+                "prev_speed": self._prev_speed,
+                "prev_light": self._prev_light,
+            }
+        )
+
+    async def async_set_last_extra_data(self, data: ExtraStoredData) -> None:
+        self._prev_speed = data.as_dict().get("prev_speed", 5)
+        self._prev_light = data.as_dict().get("prev_light", False)
 
     async def async_set_percentage(self, percentage: int):
         # Convert 0-100 % → 1-9.  round UP to ensure >0 % becomes speed 1
@@ -207,6 +218,9 @@ class Tr198aFan(FanEntity, RestoreEntity):
             self._state[ATTR_SPEED]     = int(state.attributes.get(ATTR_SPEED, 0))
             self._state[ATTR_DIRECTION] = state.attributes.get(ATTR_DIRECTION, "reverse")
             self._state[ATTR_BREEZE]    = state.attributes.get(ATTR_BREEZE)
+            self._prev_speed = self._state[ATTR_SPEED]
+            self._prev_light = state.attributes.get(ATTR_LIGHT, False)
+
         # Ensure the fan entity is in a valid state after pairing
         # If just paired, force a state update to Home Assistant
         if self._state[ATTR_SPEED] == 0:
@@ -296,5 +310,10 @@ async def async_setup_entry(
     hass.data[DOMAIN][entry.entry_id]["fan_entity"]    = fan  # ← give buttons direct access
 
     # Automatically start pairing if a power switch is associated and auto_pair is enabled
-    if switch_id and data.get("auto_pair", True):
+    paired = entry.options.get("paired", False)
+    if switch_id and data.get("auto_pair", True) and not paired:
         await cycle_power_and_pair(hass, switch_id, fan._handset_id, fan._send_base64)
+        # Save the paired flag in options
+        new_options = dict(entry.options)
+        new_options["paired"] = True
+        hass.config_entries.async_update_entry(entry, options=new_options)
