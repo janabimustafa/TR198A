@@ -54,6 +54,7 @@ class Tr198aFan(FanEntity, RestoreEntity):
         self._state: dict[str, Any] = DEF_STATE.copy()
         self._state[ATTR_BREEZE] = None     # ensure key exists
         self._prev_speed: int = 5      # default «remembered» speed
+        self._prev_light: bool = False  # default remembered light state
         self._dev_id = (DOMAIN, f"{handset_id:04x}")
         self._power_switch_id    = power_switch
         self._attr_device_info = DeviceInfo(
@@ -243,11 +244,15 @@ class Tr198aFan(FanEntity, RestoreEntity):
                 # Set fan as off
                 self._state[ATTR_SPEED] = 0
                 self._state[ATTR_BREEZE] = None
+                self._state[ATTR_LIGHT] = False
                 self.async_write_ha_state()
             elif new_state.state == "on":
                 # Only restore if the fan was previously running
                 if self._prev_speed > 0:
                     self._state[ATTR_SPEED] = self._prev_speed
+                    self.async_write_ha_state()
+                if self._prev_light:
+                    self._state[ATTR_LIGHT] = True
                     self.async_write_ha_state()
         self._unsub_power_switch = async_track_state_change_event(
             self.hass, [self._power_switch_id], power_switch_listener

@@ -25,6 +25,7 @@ class Tr198aLight(LightEntity):
         if not self.fan._state[ATTR_LIGHT]:
             await self.fan._send_state(light_toggle=True)
             self.fan._state[ATTR_LIGHT] = True
+            self.fan._prev_light = True
             self.fan.async_write_ha_state()
             self.async_write_ha_state()
 
@@ -32,6 +33,7 @@ class Tr198aLight(LightEntity):
         if self.fan._state[ATTR_LIGHT]:
             await self.fan._send_state(light_toggle=True)
             self.fan._state[ATTR_LIGHT] = False
+            self.fan._prev_light = False
             self.fan.async_write_ha_state()
             self.async_write_ha_state()
 
