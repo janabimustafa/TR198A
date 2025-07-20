@@ -12,12 +12,12 @@ async def async_setup(hass: HomeAssistant, _: dict) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {}
-    # ← we forward to BOTH fan & button platforms
-    await hass.config_entries.async_forward_entry_setups(entry, {"fan", "button"})
+    # ← we forward to fan, button, AND light platforms
+    await hass.config_entries.async_forward_entry_setups(entry, {"fan", "button", "light"})
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    unloaded = await hass.config_entries.async_unload_platforms(entry, {"fan", "button"})
+    unloaded = await hass.config_entries.async_unload_platforms(entry, {"fan", "button", "light"})
     if unloaded:
         hass.data[DOMAIN].pop(entry.entry_id, None)
     return unloaded
