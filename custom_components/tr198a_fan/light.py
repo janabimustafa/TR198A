@@ -23,12 +23,24 @@ class Tr198aLight(LightEntity):
 
     async def async_turn_on(self, **kwargs):
         # Ensure power switch is on before toggling the light
+        was_off = False
         if self.fan._power_switch_id:
             state = self.hass.states.get(self.fan._power_switch_id)
             if not state or state.state != "on":
+                was_off = True
                 await self.hass.services.async_call(
                     "switch", "turn_on", {"entity_id": self.fan._power_switch_id}, blocking=True
                 )
+
+        # If the power switch was off and the light was previously on, the
+        # physical light will turn on automatically when power is restored.
+        if was_off and self.fan._prev_light:
+            self.fan._state[ATTR_LIGHT] = True
+            self.fan._prev_light = True
+            self.fan.async_write_ha_state()
+            self.async_write_ha_state()
+            return
+
         if not self.fan._state[ATTR_LIGHT]:
             await self.fan._send_state(light_toggle=True)
             self.fan._state[ATTR_LIGHT] = True
