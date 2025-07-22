@@ -18,7 +18,7 @@ async-timeout==5.0.1
 async_interrupt==1.2.2
 atomicwrites-homeassistant==1.4.1
 attrs==25.3.0
-audioop-lts==0.2.1
+audioop-lts==0.2.1; python_version >= "3.13"
 awesomeversion==25.5.0
 bcrypt==4.3.0
 bleak==1.0.1
@@ -49,7 +49,7 @@ fonttools==4.58.5
 frozenlist==1.7.0
 h11==0.16.0
 habluetooth==4.0.1
-hass-nabucasa==0.106.0
+hass-nabucasa==0.106.0; python_version >= "3.13"
 home-assistant-bluetooth==1.13.1
 homeassistant==2025.7.2
 httpcore==1.0.9
@@ -92,10 +92,10 @@ pycognito==2024.5.1
 pycparser==2.22
 Pygments==2.19.2
 PyJWT==2.10.1
-pyobjc-core==11.1
-pyobjc-framework-Cocoa==11.1
-pyobjc-framework-CoreBluetooth==11.1
-pyobjc-framework-libdispatch==11.1
+pyobjc-core==11.1; sys_platform == "darwin"
+pyobjc-framework-Cocoa==11.1; sys_platform == "darwin"
+pyobjc-framework-CoreBluetooth==11.1; sys_platform == "darwin"
+pyobjc-framework-libdispatch==11.1; sys_platform == "darwin"
 pyOpenSSL==25.1.0
 pyparsing==3.2.3
 pyRFC3339==2.0.1
@@ -133,3 +133,5 @@ wcwidth==0.2.13
 webrtc-models==0.3.0
 yarl==1.20.1
 zeroconf==0.147.0
+pytest==8.4.1
+pytest-asyncio==0.23.6
